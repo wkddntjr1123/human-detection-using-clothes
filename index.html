@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <title>Insert title here</title>
+  </head>
+  <body>
+    <input type="file" id="input_video" name="input_video" />
+    <input id="top_color" name="input_top_color" type="text" placeholder="상의색" />
+    <input id="bot_color" name="input_bot_color" type="text" placeholder="하의색" />
+    <!-- 전송 버튼 -->
+    <button type="button" onclick="submit()">제출하기</button>
+
+    <script type="text/javascript">
+      // 최종 제출 함수
+      function submit() {
+        const jsonData = JSON.stringify({
+          top: true,
+          bottom: false,
+          input_top_color: document.getElementById("top_color").value,
+          input_bot_color: document.getElementById("bot_color").value,
+        });
+        const file = document.getElementById("input_video").files[0];
+        const buffersize = 1024 * 1024; // 파일을 전송할 단위인 버퍼사이즈 설정(1024:1byte)
+        const reader = new FileReader();
+        reader.readAsArrayBuffer(file);
+        let rawData = new ArrayBuffer();
+        reader.onload = function (e) {
+          console.log(e.target.result);
+          rawData = e.target.result;
+        };
+        let pos = 0;
+
+        //웹소켓 생성(ip주소 및 포트 설정)
+        const ws = new WebSocket("ws://175.211.34.216:8000/");
+        ws.onopen = function (message) {
+          console.log("started!");
+          ws.send("START");
+        };
+        ws.onmessage = function (message) {
+          if (message.data === "JSON") {
+            console.log(`send JSON input : ${"test"} ${"test"} ${"test"} ${"test"}`);
+            ws.send(message.data);
+            ws.send(jsonData);
+          } else if (message.data === "FILE") {
+            console.log("sending video file ... ");
+            ws.send(message.data);
+            ws.send(file);
+          } else if (message.data.startsWith("TIME")) {
+            console.log(`finish : sending video file ${message.data}`);
+          } else if (message.data === "END") {
+            console.log("disconnct : all process done");
+            ws.close();
+          } else {
+            console.log(JSON.parse(message.data));
+          }
+        };
+      }
+    </script>
+  </body>
+</html>

@@ -1,0 +1,6 @@
+outputs/
+__pycache__/
+*.pt
+*.pth
+outputs/
+*.mp4
